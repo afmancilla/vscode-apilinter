@@ -1,0 +1,30 @@
+{
+	"name": "apilinter-server",
+	"displayName": "apilinter Server",
+	"description": "Spectral Linter para APIs",
+	"publisher": "AlexMancilla",
+	"license": "LICENSE.txt",
+	"version": "0.0.1",
+	"engines": {
+		"vscode": "^1.48.0",
+		"node": "^12.20 || >= 14.13"
+	  },
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/afmancilla/vscode-apilinter"
+	},
+	"dependencies": {
+		"@stoplight/spectral-core": "^1.19.4",
+		"@stoplight/spectral-parsers": "^1.0.5",
+		"@stoplight/spectral-ruleset-bundler": "1.6.1",
+		"minimatch": "^5.1.0",
+		"node-fetch": "^2.6.1",
+		"@types/node-fetch": "^2.6.1",
+		"vscode-languageserver": "^9.0.1",
+		"vscode-languageserver-textdocument": "^1.0.11"
+	},
+	"devDependencies": {
+		"@types/minimatch": "^3.0.5",
+		"typescript": "^5.7.2"
+	}
+}

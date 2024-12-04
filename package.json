@@ -1,0 +1,84 @@
+{
+  "name": "apilinter",
+  "displayName": "apilinter",
+  "description": "linter with OpenAPI(YAML/JSON) based on Spectral ruleset",
+  "publisher": "AlexMancilla",
+  "license": "LICENSE.txt",
+  "version": "0.0.1",
+  "icon": "assets/logo.jpg",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/afmancilla/vscode-apilinter"
+  },
+	"engines": {
+		"vscode": "^1.48.0",
+		"node": "^12.20 || >= 14.13"
+	  },
+  "categories": [
+    "Linters"
+  ],
+  "keywords": [
+	"spectral",
+	"openapi",
+	"swagger",
+	"linter",
+	"api",
+	"style guide"
+  ],
+  "activationEvents": [
+		"onLanguage:yaml",
+		"onLanguage:json"
+	  ],
+  "main": "./client/out/extension",
+	"contributes": {
+		"configuration": {
+		  "type": "object",
+		  "title": "apilinter",
+		  "properties": {
+			"apilinter.spectralRulesetsFile": {
+			  "type": "string",
+			  "scope": "resource",
+			  "default": null,
+			  "description": "Specify the path to the Spectral rulesets file."
+			},
+			"apilinter.validateFiles": {
+			  "type": "array",
+			  "items": {
+				"type": "string"
+			  },
+			  "scope": "resource",
+			  "default": [],
+			  "description": "An array of file globs(e.g., `**/spec.yml`, `**/spec.json`). Only matching files will be linted. If you don't specify one, yaml files that start with 'openapi:' will be linted"
+			},
+			"apilinter.trace.server": {
+			  "type": "string",
+			  "scope": "resource",
+			  "default": "off",
+			  "enum": [
+				"off",
+				"verbose"
+			  ],
+			  "description": "Specify trace level."
+			}
+		  }
+		}
+	  },
+  "scripts": {
+		"vscode:prepublish": "npm run compile",
+		"compile": "tsc -b",
+		"watch": "tsc -b -w",
+		"lint": "eslint",
+		"postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
+		"test": "sh ./scripts/e2e.sh"
+  },
+  "devDependencies": {
+		"@eslint/js": "^9.13.0",
+		"@stylistic/eslint-plugin": "^2.9.0",
+		"@types/mocha": "^10.0.6",
+		"@types/node": "^20",
+		"eslint": "^9.13.0",
+		"mocha": "^10.3.0",
+		"typescript": "^5.7.2",
+		"typescript-eslint": "^8.11.0"
+  }
+}
