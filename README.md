@@ -1,0 +1,2 @@
+# vscode-apilinter
+Plugins Spectral
