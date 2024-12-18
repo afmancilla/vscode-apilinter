@@ -4,7 +4,7 @@
 	"description": "Spectral Linter para APIs",
 	"publisher": "AlexMancilla",
 	"license": "LICENSE.txt",
-	"version": "0.0.1",
+	"version": "0.0.2ß",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/afmancilla/vscode-apilinter"

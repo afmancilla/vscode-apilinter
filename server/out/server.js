@@ -46,10 +46,6 @@ const with_loader_1 = require("@stoplight/spectral-ruleset-bundler/with-loader")
 const minimatch_1 = __importDefault(require("minimatch"));
 const json_ref_readers_1 = require("@stoplight/json-ref-readers");
 const json_ref_resolver_1 = require("@stoplight/json-ref-resolver");
-// variables que se van usar localmente
-let initialized = false;
-// monitorea cambios en el archivo de reglas definido localmente
-let watcher = null;
 //inicializamos con valores dummy
 let settings = {
     spectralRulesetsFile: '/.spectral-default.yaml',
@@ -77,21 +73,33 @@ const resolver = new json_ref_resolver_1.Resolver({
     uriCache: cache
 });
 const spectral = new spectral_core_1.Spectral({ resolver: resolver });
+// variables que se van usar localmente
+let initialized = false;
+// monitorea cambios en el archivo de reglas definido localmente
+let watcher = null;
 /**
  *
  */
 const loadConfig = async () => {
     //Verifica si el sistema o servidor ya ha sido inicializado. Si no, la función no procede.
     if (initialized) {
-        // load global config registrados en el setting del plug ins
+        // Obtener las carpetas de trabajo y manejar el caso de que sean null o un array vacío
+        const workspaceFolders = await connection.workspace.getWorkspaceFolders();
+        let localRulesetsFile = '';
+        if (workspaceFolders && workspaceFolders.length > 0) {
+            // local config Detectar un archivo de reglas locales
+            const workspacePath = (await connection.workspace.getWorkspaceFolders())[0].uri;
+            let localRulesetsFile = (0, path_1.join)(workspacePath, '.spectral.yml');
+            if (localRulesetsFile.startsWith('file:')) {
+                localRulesetsFile = localRulesetsFile.substring(5);
+            }
+        }
+        else { //en caso se cargara solo el contrato sin folder
+            connection.console.log('apilinter: Se carga el contrato directamente sin folder o workspace folder .');
+        }
+        // Obtener configuración de la extensión
         settings = await connection.workspace.getConfiguration('apilinter');
         const globalConfigFile = settings.spectralRulesetsFile;
-        // local config Detectar un archivo de reglas locales
-        const workspacePath = (await connection.workspace.getWorkspaceFolders())[0].uri;
-        let localRulesetsFile = (0, path_1.join)(workspacePath, '.spectral.yml');
-        if (localRulesetsFile.startsWith('file:')) {
-            localRulesetsFile = localRulesetsFile.substring(5);
-        }
         //Verifica si el archivo existe 
         if (fs.existsSync(localRulesetsFile)) {
             settings.spectralRulesetsFile = localRulesetsFile;
@@ -117,6 +125,7 @@ const loadConfig = async () => {
             watcher = null;
         }
     }
+    // Cargar y aplicar reglas
     const customRules = await (0, with_loader_1.bundleAndLoadRuleset)(settings.spectralRulesetsFile, {
         fs: fakeFS,
         fetch: globalThis.fetch,
@@ -170,8 +179,8 @@ connection.onDidChangeWatchedFiles(async (_change) => {
 });
 // The content of a text document has changed. This event is emitted
 // when the text document first opened or when its content has changed.
-documents.onDidChangeContent(change => {
-    validateTextDocument(change.document);
+documents.onDidChangeContent(async (change) => {
+    await validateTextDocument(change.document);
 });
 /**
  * Se ejecuta cuando el contrato se guarda
@@ -193,10 +202,21 @@ async function validateTextDocument(textDocument) {
     const text = textDocument.getText();
     let diagnostics = [];
     //console.log("settings:",settings);
-    if ((settings.validateFiles.length == 0 && text.startsWith('openapi:'))
+    // Dividir el texto en líneas y eliminar las que sean irrelevantes como "---"
+    const lines = text.split(/\r?\n/).filter(line => line.trim() && !line.startsWith('---'));
+    // Buscar en las líneas limpias el encabezado 'openapi:'
+    const containsOpenAPI = lines.some(line => line.trim().startsWith('openapi:'));
+    if ((settings.validateFiles.length == 0 && containsOpenAPI)
         || settings.validateFiles.some(validateFile => (0, minimatch_1.default)(textDocument.uri, validateFile))) {
-        const workspaceFolder = (await connection.workspace.getWorkspaceFolders())[0].uri;
-        const filePath = textDocument.uri.substring(workspaceFolder.length + 1);
+        //const workspaceFolder = (await connection.workspace.getWorkspaceFolders())![0].uri;
+        //const filePath = textDocument.uri.substring(workspaceFolder.length + 1);
+        const workspaceFolders = await connection.workspace.getWorkspaceFolders();
+        let workspaceFolderUri = '';
+        let filePath = textDocument.uri;
+        if (workspaceFolders && workspaceFolders.length > 0) {
+            workspaceFolderUri = workspaceFolders[0].uri;
+            filePath = textDocument.uri.substring(workspaceFolderUri.length + 1);
+        }
         const document = filePath.toLowerCase().endsWith('.json') ? new spectral_core_1.Document(text, spectral_parsers_1.Json, filePath) : new spectral_core_1.Document(text, spectral_parsers_1.Yaml, filePath);
         const issues = await spectral.run(document);
         diagnostics = issues.map(issue => {

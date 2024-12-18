@@ -35,13 +35,7 @@ interface LinterSettings {
 	validateFiles: string[];
   }
 
-// variables que se van usar localmente
-let initialized = false;
-
-// monitorea cambios en el archivo de reglas definido localmente
-let watcher: fs.FSWatcher | null = null;
-
-//inicializamos con valores dummy
+  //inicializamos con valores dummy
 let settings: LinterSettings = {
 	spectralRulesetsFile: '/.spectral-default.yaml',
 	validateFiles: []
@@ -50,18 +44,17 @@ let settings: LinterSettings = {
 // inicializa para determinar si hay reglas definidas si no las hay
 // carga las reglas minimas de un contrato openapi
 const fakeFS: any = {
-promises: {
-	async readFile(filepath: string) {
-			if (filepath === '/.spectral-default.yaml') {
-				return `extends: ["spectral:oas"]`;
-			}
-			return fs.promises.readFile(filepath);
+	promises: {
+		async readFile(filepath: string) {
+				if (filepath === '/.spectral-default.yaml') {
+					return `extends: ["spectral:oas"]`;
+				}
+				return fs.promises.readFile(filepath);
+			},
 		},
-	},
-};
+	};
 
-
-// Crear una caché para documentos resueltos
+	// Crear una caché para documentos resueltos
 const cache = new Cache();
 
 // Configurar el resolver con la caché
@@ -74,6 +67,12 @@ const resolver = new Resolver({
 
 const spectral = new Spectral({ resolver: resolver });
 
+// variables que se van usar localmente
+let initialized = false;
+
+// monitorea cambios en el archivo de reglas definido localmente
+let watcher: fs.FSWatcher | null = null;
+
 
 /**
  * 
@@ -83,16 +82,28 @@ const loadConfig = async () => {
 	//Verifica si el sistema o servidor ya ha sido inicializado. Si no, la función no procede.
 	if (initialized) {
 
-	  // load global config registrados en el setting del plug ins
+    // Obtener las carpetas de trabajo y manejar el caso de que sean null o un array vacío
+    const workspaceFolders = await connection.workspace.getWorkspaceFolders();
+
+	let localRulesetsFile = '';
+
+    if (workspaceFolders && workspaceFolders.length > 0) {
+
+ 	  // local config Detectar un archivo de reglas locales
+	   const workspacePath = (await connection.workspace.getWorkspaceFolders())![0].uri;
+	   let localRulesetsFile = join(workspacePath, '.spectral.yml');
+	   if (localRulesetsFile.startsWith('file:')) {
+		 localRulesetsFile = localRulesetsFile.substring(5);
+	   }       
+    }else{ //en caso se cargara solo el contrato sin folder
+		connection.console.log('apilinter: Se carga el contrato directamente sin folder o workspace folder .');
+	}
+
+	  // Obtener configuración de la extensión
 	  settings = await connection.workspace.getConfiguration('apilinter') as LinterSettings;
 	  const globalConfigFile = settings.spectralRulesetsFile;
   
-	  // local config Detectar un archivo de reglas locales
-	  const workspacePath = (await connection.workspace.getWorkspaceFolders())![0].uri;
-	  let localRulesetsFile = join(workspacePath, '.spectral.yml');
-	  if (localRulesetsFile.startsWith('file:')) {
-		localRulesetsFile = localRulesetsFile.substring(5);
-	  }
+
 
 	  //Verifica si el archivo existe 
 	  if (fs.existsSync(localRulesetsFile)) {
@@ -121,6 +132,7 @@ const loadConfig = async () => {
 		watcher = null;
 	  }
 	}
+	// Cargar y aplicar reglas
 	const customRules = await bundleAndLoadRuleset(settings.spectralRulesetsFile, {
 	  fs: fakeFS,
 	  fetch: globalThis.fetch,
@@ -187,8 +199,8 @@ connection.onDidChangeWatchedFiles(async _change => {
 
 // The content of a text document has changed. This event is emitted
 // when the text document first opened or when its content has changed.
-documents.onDidChangeContent(change => {
-	validateTextDocument(change.document);
+documents.onDidChangeContent(async change => {
+	await validateTextDocument(change.document);
 });
 
 /**
@@ -210,18 +222,33 @@ documents.onDidSave(change => {
  */
 	async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 
-
 	const text = textDocument.getText();
 	let diagnostics: Diagnostic[] = [];
 
 	//console.log("settings:",settings);
 
+	    // Dividir el texto en líneas y eliminar las que sean irrelevantes como "---"
+		const lines = text.split(/\r?\n/).filter(line => line.trim() && !line.startsWith('---'));
+		// Buscar en las líneas limpias el encabezado 'openapi:'
+		const containsOpenAPI = lines.some(line => line.trim().startsWith('openapi:'));
+
+		
 	if (
-	  (settings.validateFiles.length == 0 && text.startsWith('openapi:'))
+	  (settings.validateFiles.length == 0 && containsOpenAPI)
 	  || settings.validateFiles.some(validateFile => minimatch(textDocument.uri, validateFile))
 	) {
-	  const workspaceFolder = (await connection.workspace.getWorkspaceFolders())![0].uri;
-	  const filePath = textDocument.uri.substring(workspaceFolder.length + 1);
+	  //const workspaceFolder = (await connection.workspace.getWorkspaceFolders())![0].uri;
+	  //const filePath = textDocument.uri.substring(workspaceFolder.length + 1);
+
+	  const workspaceFolders = await connection.workspace.getWorkspaceFolders();
+	  let workspaceFolderUri = '';
+	  let filePath = textDocument.uri;
+  
+	  if (workspaceFolders && workspaceFolders.length > 0) {
+		  workspaceFolderUri = workspaceFolders[0].uri;
+		  filePath = textDocument.uri.substring(workspaceFolderUri.length + 1);
+	  }
+
 	  const document = filePath.toLowerCase().endsWith('.json') ? new Document(text, Json, filePath) : new Document(text, Yaml, filePath);
 
 

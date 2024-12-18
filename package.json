@@ -4,7 +4,7 @@
   "description": "linter with OpenAPI(YAML/JSON) based on Spectral ruleset",
   "publisher": "AlexMancilla",
   "license": "LICENSE.txt",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "icon": "assets/logo.jpg",
   "repository": {
     "type": "git",
