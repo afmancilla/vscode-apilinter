@@ -1,21 +1,15 @@
-MIT License
+Custom License - Apinauta Plugin
 
-Copyright (c) 2025 alexmancilla@apinuta.com
+Copyright (c) 2025 Alex Mancilla <alexmancilla@apinauta.com>
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Se concede permiso a la Empresa para usar este software únicamente con fines internos.  
+No está permitido redistribuir, sublicenciar, vender ni publicar este software, ni en su forma original ni modificada, sin autorización expresa y por escrito del autor.  
+Está prohibido cambiar el nombre, marca o autoría del software en cualquier circunstancia.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+Esta licencia se aplica a todo el código fuente, binarios compilados, documentación asociada y cualquier trabajo derivado.  
+El permiso quedará automáticamente revocado si la Empresa incumple cualquiera de las condiciones.  
+La Empresa no podrá transferir ni ceder este permiso a terceros sin autorización expresa del autor.  
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Este acuerdo se regirá por las leyes de [País] y cualquier disputa será resuelta en los tribunales competentes de dicha jurisdicción.  
+
+El software se proporciona "TAL CUAL", sin garantía de ningún tipo, expresa o implícita.
